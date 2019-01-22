@@ -88,11 +88,57 @@ object List { // `List` companion object. Contains functions for creating and wo
 
   @tailrec
   def foldLeft[A,B](l: List[A], z: B)(f: (B, A) => B): B = l match {
+    case Nil => z
     case Cons(x, Nil) => f(z,x)
     case Cons(x, y) => foldLeft(y, f(z,x))(f)
   }
 
-  def map[A,B](l: List[A])(f: A => B): List[B] = ???
+  def foldRight2[A,B](as: List[A], z: B)(f: (A, B) => B): B = as match {
+    case Nil => z
+    case Cons(x, Nil) => f(x, z)
+    case Cons(x, y) => foldLeft(List.append(List.reverse(y), List(x)), z)((b, a) => f(a, b))
+  }
+
+  def sum3(l: List[Int]) = foldLeft(l, 0)(_ + _)
+
+  def product3(l: List[Int]): Int = foldLeft(l, 1)(_ * _)
+
+  def length2(l: List[_]): Int = foldLeft(l, 0)((z, _) => z + 1)
+
+  def reverse[A](l: List[A]): List[A] = l match {
+    case Nil => Nil
+    case Cons(x, Nil) => l
+    case Cons(x, y) => foldLeft(y, List(x))((z, a) => List.append(List(a), z))
+  }
+
+  def append2[A](l: List[A], m: List[A]) = foldLeft(reverse(l), m)((b,a) => Cons(a, b))
+
+  def append3[A](ls: List[List[A]]): List[A] = ls match {
+    case Nil => Nil
+    case Cons(x, y) => foldLeft(y, x)(append(_, _))
+  }
+
+  def map[A,B](l: List[A])(f: A => B): List[B] = reverse(l) match {
+    case Nil => Nil
+    case Cons(x, y) => foldLeft(y, List(f(x)))((b,a) => Cons(f(a), b))
+  }
+
+  def filter[A](l: List[A])(f: A => Boolean): List[A] = foldLeft(reverse(l), List[A]())((b,a) => f(a) match {
+    case true => Cons(a, b)
+    case false => b
+  })
+
+  def flatMap[A,B](as: List[A])(f: A => List[B]): List[B] = foldLeft(reverse(as), List[B]())((b,a) => List.append(f(a), b))
+
+  def filter2[A](l: List[A])(f: A => Boolean): List[A] = flatMap(l)((a) => if (f(a)) List(a) else Nil)
+
+  def zipWith[A, B](l: List[A], m: List[A])(f: (A, A) => B): List[B] = (l, m) match {
+    case (Nil, _) => Nil
+    case (_, Nil) => Nil
+    case (Cons(a,b), Cons(c,d)) => Cons(f(a,c), zipWith(b,d)(f))
+  }
+
+  def
 }
 
 object TestList {
@@ -105,5 +151,21 @@ object TestList {
     assert(List.init(List(1,2,3)) == List(1,2))
     assert(List.length(List(1,2,3)) == 3)
     assert(List.foldLeft(List(1,2,3), 0)(_ + _) == 6)
+    assert(List.sum3(List(1,2,3)) == 6)
+    assert(List.product3(List(1,2,3)) == 6)
+    assert(List.length2(List(1,2,3)) == 3)
+    assert(List.reverse(List(1,2,3)) == List(3,2,1))
+    assert(List.foldRight(List("a", "b", "c"), "")(_ + _) == "abc")
+    assert(List.foldLeft(List("a", "b", "c"), "")(_ + _) == "abc")
+    assert(List.append2(List("a", "b", "c"), List("d", "e", "f")) == List("a", "b", "c", "d", "e", "f"))
+    assert(List.append3(List(List("a", "b", "c"), List("d", "e", "f"))) == List("a", "b", "c", "d", "e", "f"))
+    assert(List.map(List(1,2,3))(_ + 1) == List(2,3,4))
+    assert(List.map(List(1.0, 2.0, 3.0))(_.toString) == List("1.0", "2.0", "3.0"))
+    assert(List.filter(List(1,2,3))(_ % 2 == 0) == List(2))
+    assert(List.flatMap(List(1,2,3))(p => List(p, p)) == List(1,1,2,2,3,3))
+    assert(List.filter2(List(1,2,3))(_ % 2 == 0) == List(2))
+    assert(List.zipWith(List(1,2,3), List(4,5,6))(_ * _) == List(4,10,18))
+
+
   }
 }
