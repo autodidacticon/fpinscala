@@ -138,7 +138,17 @@ object List { // `List` companion object. Contains functions for creating and wo
     case (Cons(a,b), Cons(c,d)) => Cons(f(a,c), zipWith(b,d)(f))
   }
 
-  def
+  def startsWith[A](l: List[A], m: List[A]): Boolean = (l,m) match {
+    case (_, Nil) => true
+    case (Cons(a,b), Cons(c,d)) => if (a == c) startsWith(b,d) else false
+    case _ => false
+  }
+
+  def hasSubsequence[A](sup: List[A], sub: List[A]): Boolean = sup match {
+    case Nil => sub == Nil
+    case _ if startsWith(sup, sub) => true
+    case Cons(a,b) => hasSubsequence(b, sub)
+  }
 }
 
 object TestList {
@@ -165,7 +175,7 @@ object TestList {
     assert(List.flatMap(List(1,2,3))(p => List(p, p)) == List(1,1,2,2,3,3))
     assert(List.filter2(List(1,2,3))(_ % 2 == 0) == List(2))
     assert(List.zipWith(List(1,2,3), List(4,5,6))(_ * _) == List(4,10,18))
-
+    assert(List.hasSubsequence(List(1,2,3,4,5,6), List(3,4,5)))
 
   }
 }
