@@ -86,6 +86,15 @@ trait Stream[+A] {
     case _ => None
   }
 
+  def zipAll[B](s2: Stream[B]): Stream[(Option[A],Option[B])] = {
+    Stream.unfold[(Option[A], Option[B]), (Stream[A], Stream[B])]((this -> s2)){
+      case (Empty, Empty) => None
+      case (Empty, Cons(h, t)) => Some((Option.empty[A], Some(h())), (empty[A], t()))
+      case (Cons(h, t), Empty) => Some((Some(h()), Option.empty[B]), (t(), empty[B]))
+      case (Cons(h, t), Cons(h1, t1)) => Some((Some(h()), Some(h1())), (t(), t1()))
+    }
+  }
+
   def startsWith[B](s: Stream[B]): Boolean = ???
 }
 case object Empty extends Stream[Nothing]
@@ -133,7 +142,6 @@ object Stream {
     case (Cons(a,b), Cons(c,d)) => Some((f(a(), c()), (b(), d())))
     case _ => None
   }
-
 }
 
 object TestStream {
@@ -163,5 +171,6 @@ object TestStream {
     assert(s.takeUnfold(2).toList == List(1,2))
     assert(s.takeWhileUnfold(p).toList == List())
     assert(Stream.zipWith(s,s)(_ + _).toList == List(2,4,6))
+    assert(s.zipAll(s).toList == Stream(Some(1) -> Some(1), Some(2) -> Some(2), Some(3) -> Some(3)).toList)
   }
 }
